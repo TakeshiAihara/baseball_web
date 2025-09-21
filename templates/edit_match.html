@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}コメント編集{% endblock %}
+{% block content %}
+<h1>コメント編集</h1>
+<p>この試合のコメントのみ編集できます。</p>
+<form method="post">
+    <input type="hidden" name="date" value="{{ date }}">
+    <input type="hidden" name="team" value="{{ team }}">
+    <div>
+        <label for="comment">コメント:</label><br>
+        <textarea id="comment" name="comment" rows="4" cols="60" required>{{ comment }}</textarea>
+    </div>
+    <br>
+    <button type="submit">保存</button>
+    <a href="{{ url_for('summary') }}">キャンセル</a>
+</form>
+{% endblock %}

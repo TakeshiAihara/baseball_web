@@ -1,0 +1,72 @@
+
+<link rel="stylesheet" href="{{ url_for('static', filename='top.css') }}">
+<h1>試合記録ページ</h1>
+<nav>
+  <a href="/">TOP</a> |
+  <a href="/record">試合記録</a> |
+  <a href="/summary">通算成績</a> |
+  <a href="/players">選手成績</a> |
+  <a href="/about">その他</a>
+</nav>
+
+<form action="/record" method="POST">
+  <label for="target_date">日付:</label>
+  <input type="date" id="target_date" name="target_date" value="{{ today }}" required><br>
+
+  <label for="team_name">チーム名:</label>
+  <select id="team_name" name="team_name" required>
+      {% for team in teams %}
+      <option value="{{ team }}">{{ team }}</option>
+      {% endfor %}
+      <option value="その他">その他</option>
+  </select><br>
+
+  <div id="other_fields" style="display:none; margin-top:1em;">
+    <label for="opp_team">相手チーム:</label>
+    <input type="text" id="opp_team" name="opp_team"><br>
+    <label for="home_away">ホーム/ビジター:</label>
+    <select id="home_away" name="home_away">
+      <option value="ホーム">ホーム</option>
+      <option value="ビジター">ビジター</option>
+    </select><br>
+    <label for="score">得点:</label>
+    <input type="number" id="score" name="score" min="0"><br>
+    <label for="lost">失点:</label>
+    <input type="number" id="lost" name="lost" min="0"><br>
+    <label for="result">勝敗:</label>
+    <select id="result" name="result">
+      <option value="勝">勝</option>
+      <option value="敗">敗</option>
+      <option value="引分">引分</option>
+    </select><br>
+    <label for="comment">コメント:</label>
+    <textarea id="comment" name="comment" rows="2" cols="40" placeholder="試合に関するメモや感想など"></textarea><br>
+  </div>
+
+  <div id="normal_fields">
+    <label for="comment">コメント:</label>
+    <textarea id="comment" name="comment" rows="2" cols="40" placeholder="試合に関するメモや感想など"></textarea><br>
+  </div>
+
+  <button type="submit">指定した試合を記録</button>
+</form>
+
+<script>
+  const teamSelect = document.getElementById('team_name');
+  const otherFields = document.getElementById('other_fields');
+  const normalFields = document.getElementById('normal_fields');
+  teamSelect.addEventListener('change', function() {
+    if (this.value === 'その他') {
+      otherFields.style.display = '';
+      normalFields.style.display = 'none';
+    } else {
+      otherFields.style.display = 'none';
+      normalFields.style.display = '';
+    }
+  });
+  // 初期表示
+  if (teamSelect.value === 'その他') {
+    otherFields.style.display = '';
+    normalFields.style.display = 'none';
+  }
+</script>

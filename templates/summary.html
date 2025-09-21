@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% block title %}通算成績ページ{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='top.css') }}">
+<h1>通算成績ページ</h1>
+<nav>
+  <a href="/">TOP</a> |
+  <a href="/record">試合記録</a> |
+  <a href="/summary">通算成績</a> |
+  <a href="/players">選手成績</a> |
+  <a href="/about">その他</a>
+</nav>
+
+<!-- 1. 通算成績 -->
+<section style="margin-top:2em;">
+  <h2>通算成績</h2>
+  <div>
+    <table border="1" cellpadding="6" style="background:#fff;">
+      <tr><th>試合数</th><th>勝利数</th><th>敗北数</th><th>引分数</th><th>勝率</th></tr>
+      <tr>
+        <td>{{ total_games }}</td>
+        <td>{{ win_count }}</td>
+        <td>{{ lose_count }}</td>
+        <td>{{ draw_count }}</td>
+        <td>{{ win_rate }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div style="min-width:320px; max-width:420px;">
+    <h3 style="margin-bottom:0.2em;">貯金数グラフ</h3>
+    <canvas id="cumulativeChart" width="480" height="320"></canvas>
+    <script>
+      const ctx = document.getElementById('cumulativeChart').getContext('2d');
+      const chokinData = {{ cumulative_results | default([]) | tojson }};
+      const labels = Array.from({length: chokinData.length}, (_, i) => i);
+      // 動的に色を決定（区間ごとに赤/青で分ける）
+      function getSegmentColor(ctx) {
+        const {p0, p1} = ctx;
+        // 両端が0以上なら赤、それ以外（負を含む）は青
+        if (p0.parsed.y >= 0 && p1.parsed.y >= 0) return 'red';
+        return 'blue';
+      }
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '貯金数の推移',
+            data: chokinData,
+            borderColor: function(context) {
+              // Chart.js v3+ では borderColor でセグメントごとに色分け可能
+              const chart = context.chart;
+              const {ctx, chartArea} = context;
+              if (!chartArea) return 'black'; // 初期描画
+              return undefined; // segment.colorで制御
+            },
+            segment: {
+              borderColor: getSegmentColor
+            },
+            borderWidth: 1,
+            pointRadius: 1,
+            pointBackgroundColor: 'black', // 点は常に黒
+            fill: false,
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              title: { display: true, text: '貯金数' },
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              },
+              grid: {
+                color: function(context) {
+                  if (context.tick.value === 0) {
+                    return '#000'; // 0の補助線を黒に
+                  }
+                  return Chart.defaults.borderColor;
+                },
+                lineWidth: function(context) {
+                  return context.tick.value === 0 ? 2 : 1;
+                }
+              }
+            },
+            x: {
+              title: { display: true, text: '試合数' }
+            }
+          },
+          plugins: {
+            legend: { display: true },
+            title: { display: false }
+          },
+          elements: {
+            line: { fill: false }
+          }
+        }
+      });
+
+    </script>
+  </div>
+</div>
+</section>
+
+<!-- 2. 対戦チームごとの試合数・勝率＆通算成績 -->
+<section style="margin-top:2em; display: flex; flex-wrap: wrap; gap: 2em; align-items: flex-start;">
+  <div>
+    <h2>対戦チームごとの成績</h2>
+    <table border="1" cellpadding="6" style="background:#fff;">
+      <tr><th>チーム名</th><th>試合数</th><th>勝</th><th>敗</th><th>引分</th><th>勝率</th></tr>
+      {% for row in vs_team_stats %}
+      <tr>
+        <td>{{ row.team }}</td>
+        <td>{{ row.games }}</td>
+        <td>{{ row.win }}</td>
+        <td>{{ row.lose }}</td>
+        <td>{{ row.draw }}</td>
+        <td>{{ row.win_rate }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+      <h2>年度ごとの成績</h2>
+      <table border="1" cellpadding="6" style="background:#fff;">
+        <tr><th>年度</th><th>試合数</th><th>勝</th><th>敗</th><th>引分</th><th>勝率</th></tr>
+        {% for year_data in yearly_stats %}
+        <tr>
+          <td>{{ year_data.year }}年</td>
+          <td>{{ year_data.games }}</td>
+          <td>{{ year_data.win }}</td>
+          <td>{{ year_data.lose }}</td>
+          <td>{{ year_data.draw }}</td>
+          <td>{{ year_data.win_rate }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      
+      <!-- 年度ごと成績の棒グラフ -->
+        <h2>年度別成績グラフ</h2>
+        <canvas id="yearlyBarChart"></canvas>
+      <script>
+        // Wait for the page to fully load
+        document.addEventListener('DOMContentLoaded', function() {
+        
+          // 1. Get the drawing area (canvas)
+          const ctx = document.getElementById('yearlyBarChart').getContext('2d');
+        
+          // 2. Get data from your backend (passed via Jinja2)
+          // This safely converts your Python list into a JavaScript array.
+          const yearData = {{ yearly_stats | tojson | safe }};
+        
+          // If data is empty, don't try to draw the chart
+          if (!yearData || yearData.length === 0) {
+            console.log("Chart data (year_data) is empty. The chart will not be displayed.");
+            return;
+          }
+        
+          // 3. Prepare data for the chart
+          const labels = yearData.map(item => item.year + '年'); // e.g., ["2024年", "2025年"]
+          const wins = yearData.map(item => item.win);
+          const losses = yearData.map(item => item.lose);
+          const draws = yearData.map(item => item.draw);
+        
+          // 4. Create the chart instance
+          new Chart(ctx, {
+            type: 'bar', // Specify the chart type
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '勝ち',
+                data: wins,
+                backgroundColor: 'rgba(255, 99, 132, 0.8)'  // Red
+              }, {
+                label: '負け',
+                data: losses,
+                backgroundColor: 'rgba(54, 162, 235, 0.8)' // Blue
+              }, {
+                label: '引き分け',
+                data: draws,
+                backgroundColor: 'rgba(201, 203, 207, 0.8)' // Gray
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                title: {
+                  display: true,
+                  text: '年度ごとの勝敗数'
+                },
+                legend: {
+                  position: 'top',
+                }
+              },
+              scales: {
+                x: {
+                  stacked: true, // Stack bars on the X-axis
+                },
+                y: {
+                  stacked: true, // Stack bars on the Y-axis
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        });
+      </script>
+    </div>
+    
+</section>
+
+<!-- 2.5 カテゴリ別合計・平均テーブル -->
+<section style="margin-top:2em;">
+  <h2>カテゴリ別合計・平均</h2>
+  
+  <!-- 基本成績 -->
+  <div style="margin-bottom: 2em;">
+    <h3>基本成績</h3>
+    <div style="overflow-x:auto;">
+      <table border="1" cellpadding="4" style="background:#fff; min-width:300px;">
+        <tr>
+          <th>項目</th>
+          {% for col in basic_sum.keys() %}<th>{{ col }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <td>合計</td>
+          {% for col in basic_sum.keys() %}<td>{{ basic_sum[col] }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td>平均</td>
+          {% for col in basic_avg.keys() %}<td>{{ basic_avg[col] }}</td>{% endfor %}
+        </tr>
+      </table>
+    </div>
+  </div>
+  <table border="1" cellpadding="6" style="background:#fff;">
+    <tr><th>通算打率</th><th>通算本塁打率</th><th>通算OPS</th><th>通算防御率</th><th>通算被打率</th><th>通算被本塁打率</th></tr>
+    <tr>
+      <td>{{ avg_batting }}</td>
+      <td>{{ hr_rate }}</td>
+      <td>{{ ops }}</td>
+      <td>{{ era }}</td>
+      <td>{{ opp_avg }}</td>
+      <td>{{ opp_hr_rate }}</td>
+    </tr>
+  </table>
+  
+  <!-- 打撃成績 -->
+  <div style="margin-bottom: 2em;">
+    <h3>🐉 打撃成績</h3>
+    <div style="overflow-x:auto;">
+      <table border="1" cellpadding="4" style="background:#fff; min-width:600px;">
+        <tr>
+          <th>項目</th>
+          {% for col in batting_sum.keys() %}<th>{{ col }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <td>合計</td>
+          {% for col in batting_sum.keys() %}<td>{{ batting_sum[col] }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td>平均</td>
+          {% for col in batting_avg.keys() %}<td>{{ batting_avg[col] }}</td>{% endfor %}
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <!-- 投手成績 -->
+  <div style="margin-bottom: 2em;">
+    <h3>⚾ 投手成績</h3>
+    <div style="overflow-x:auto;">
+      <table border="1" cellpadding="4" style="background:#fff; min-width:600px;">
+        <tr>
+          <th>項目</th>
+          {% for col in pitching_sum.keys() %}<th>{{ col }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <td>合計</td>
+          {% for col in pitching_sum.keys() %}<td>{{ pitching_sum[col] }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td>平均</td>
+          {% for col in pitching_avg.keys() %}<td>{{ pitching_avg[col] }}</td>{% endfor %}
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <!-- 相手チーム成績 -->
+  <div style="margin-bottom: 2em;">
+    <h3>👥 相手チーム成績</h3>
+    <div style="overflow-x:auto;">
+      <table border="1" cellpadding="4" style="background:#fff; min-width:400px;">
+        <tr>
+          <th>項目</th>
+          {% for col in opponent_sum.keys() %}<th>{{ col }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <td>合計</td>
+          {% for col in opponent_sum.keys() %}<td>{{ opponent_sum[col] }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td>平均</td>
+          {% for col in opponent_avg.keys() %}<td>{{ opponent_avg[col] }}</td>{% endfor %}
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <!-- 試合情報 -->
+  <div style="margin-bottom: 2em;">
+    <h3>📊 試合情報</h3>
+    <div style="overflow-x:auto;">
+      <table border="1" cellpadding="4" style="background:#fff; min-width:300px;">
+        <tr>
+          <th>項目</th>
+          <th>試合時間</th>
+          <th>入場者数</th>
+        </tr>
+        <tr>
+          <td>平均</td>
+          <td>{{ avg_time }}</td>
+          <td>{{ avg_att }}人</td>
+        </tr>
+        <tr>
+          <td>合計</td>
+          <td>{{ sum_time }}</td>
+          <td>{{ sum_att }}人</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 全試合詳細 -->
+<section style="margin-top:2em;">
+  <h2>全試合詳細</h2>
+  <!-- ここでは全試合の詳細な結果一覧を確認・編集できます。各試合の情報を確認し、「編集」ボタンで内容を修正、「削除」ボタンで該当試合を削除できます。 -->
+  <div style="overflow-x:auto;">
+    <table border="1" cellpadding="4" style="background:#fff; min-width:1200px;">
+      <tr>
+        {% for col in columns %}
+          {% if col.startswith('自チーム_') %}
+            <th> {{ col.replace('自チーム_', '') }}</th>
+          {% elif col.startswith('相手チーム_') %}
+            <th>👥 {{ col.replace('相手チーム_', '') }}</th>
+          {% elif col == 'チーム名' %}
+            <th>チーム</th>
+          {% elif col == '相手チーム' %}
+            <th>相手</th>
+          {% elif col == 'ホーム/ビジター' %}
+            <th>場所</th>
+          {% else %}
+            <th>{{ col }}</th>
+          {% endif %}
+        {% endfor %}
+        <th>操作</th> <!-- 編集・削除ボタンが表示されます -->
+      </tr>
+      {% for match in matches %}
+      <tr>
+        {% for col in columns %}
+          {% if col == 'URL' and match[col] %}
+            <td><a href="{{ match[col] }}" target="_blank">リンク</a></td>
+          {% elif col == '日付' %}
+            <td>{{ match[col][:10] if match[col] else '' }}</td>
+          {% elif col == 'ホーム/ビジター' %}
+            <td>
+              {% if match[col] == 'ホーム' %}
+                ホーム
+              {% elif match[col] == 'ビジター' %}
+                ビジター
+              {% else %}
+                {{ match[col] }}
+              {% endif %}
+            </td>
+          {% elif col == '勝敗' %}
+            <td>
+              {% if match[col] == '勝' %}
+                <span class="result-win">{{ match[col] }}</span>
+              {% elif match[col] == '敗' %}
+                <span class="result-lose">{{ match[col] }}</span>
+              {% elif match[col] == '引分' %}
+                <span class="result-draw">{{ match[col] }}</span>
+              {% else %}
+                {{ match[col] }}
+              {% endif %}
+            </td>
+          {% else %}
+            <td>{{ match[col] }}</td>
+          {% endif %}
+        {% endfor %}
+        <td>
+          <a href="/edit_match_by_date?date={{ match['日付'] | urlencode }}&team={{ match['チーム名'] | urlencode }}" style="display:inline-block; padding: 5px 10px; background-color: #007bff; color: white; text-decoration: none; border-radius: 3px; margin-right: 5px;">編集</a>
+          <form method="post" action="/delete_match/{{ loop.index0 }}" style="display:inline;" onsubmit="return confirm('本当に削除しますか？');">
+            <button type="submit">削除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+{% endblock %}

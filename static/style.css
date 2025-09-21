@@ -1,0 +1,92 @@
+/* static/style.css (例: 既存のものがあれば追記、なければ新規作成) */
+body {
+    /* 必要であれば、共通のフォントやマージンなど */
+}
+
+/* 他の共通スタイル */
+.button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .summary-card {
+    background: #fff;
+    border: 1.5px solid #b2d7ff;
+    border-radius: 10px;
+    padding: 18px 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px #e3f0fa;
+    min-width: 120px;
+  }
+  .summary-card.summary-wide {
+    grid-column: span 2;
+  }
+  .summary-title {
+    font-size: 1em;
+    color: #007bff;
+    margin-bottom: 5px;
+  }
+  .summary-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .summary-sub {
+    font-size: 0.9em;
+    color: #888;
+  }
+  .recent-matches span {
+    display: inline-block;
+    width: 2em;
+    height: 2em;
+    line-height: 2em;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: bold;
+    margin: 0 2px;
+  }
+  .result-勝 { background: #3cb371; }
+  .result-敗 { background: #e74c3c; }
+  .result-引分 { background: #888; }
+  
+  /* 全試合詳細の勝敗背景色 */
+  .result-win { 
+    background: #3cb371; 
+    color: white; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    display: inline-block; 
+  }
+  .result-lose { 
+    background: #e74c3c; 
+    color: white; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    display: inline-block; 
+  }
+  .result-draw { 
+    background: #888; 
+    color: white; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    display: inline-block; 
+  }

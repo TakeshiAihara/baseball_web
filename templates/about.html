@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}その他ページ{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='top.css') }}">
+<h1>その他（サブ）ページ</h1>
+<nav>
+  <a href="/">TOP</a> |
+  <a href="/record">試合記録</a> |
+  <a href="/summary">通算成績</a> |
+  <a href="/players">選手成績</a> |
+  <a href="/about">その他</a>
+</nav>
+<p>整備中。</p>
+{% endblock %}

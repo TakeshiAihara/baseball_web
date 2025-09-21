@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}TOP - 通算サマリー{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='top.css') }}">
+<h1>野球アプリ TOP</h1>
+<nav>
+  <a href="/">TOP</a> |
+  <a href="/record">試合記録</a> |
+  <a href="/summary">通算成績</a> |
+  <a href="/players">選手成績</a> |
+  <a href="/about">その他</a>
+</nav>
+
+<div class="top-summary-cards">
+  <div class="top-summary-card">
+    <div class="top-summary-title">通算勝率</div>
+    <div class="top-summary-value">
+      <span class="top-value">{{ summary['通算勝率'] if summary else '-' }}</span>
+    </div>
+  </div>
+  <div class="top-summary-card">
+    <div class="top-summary-title">通算観戦数</div>
+    <div class="top-summary-value">
+      <span class="top-value">{{ summary['通算観戦数'] if summary else '-' }}</span>
+      <span class="top-sub">試合</span>
+    </div>
+  </div>
+  <div class="top-summary-card">
+    <div class="top-summary-title">現在の波</div>
+    <div class="top-summary-value">
+      <span class="top-value">{{ summary['現在の波'] if summary and summary['現在の波'] else '-' }}</span>
+      <i class="fas fa-wave-square"></i>
+    </div>
+  </div>
+  <div class="top-summary-card">
+    <div class="top-summary-title">直近5試合</div>
+    <div class="top-recent-matches">
+      {% if summary and summary['直近5試合'] %}
+        {% for rec in summary['直近5試合'] %}
+          <span class="top-result5-{{ rec['勝敗'] }}">{{ rec['勝敗'][0] }}</span>
+        {% endfor %}
+      {% else %}-{% endif %}
+    </div>
+  </div>
+  <div class="top-summary-card summary-wide">
+    <div class="top-summary-title">通算成績</div>
+    <div class="top-summary-value top-summary-flex">
+      {% if summary and summary['通算成績'] %}
+        <span class="top-win">{{ summary['通算成績']['勝'] }}勝</span>
+        <span class="top-lose">{{ summary['通算成績']['敗'] }}敗</span>
+        <span class="top-draw">{{ summary['通算成績']['引分'] }}分</span>
+      {% else %}-{% endif %}
+    </div>
+  </div>
+  <div class="top-summary-card">
+    <div class="top-summary-title"><span class="top-icon">🏠</span>本拠地成績</div>
+    <div class="top-summary-value top-summary-flex">
+      {% if summary and summary['ホーム成績'] %}
+        <span class="top-win">{{ summary['ホーム成績']['勝'] }}勝</span>
+        <span class="top-lose">{{ summary['ホーム成績']['敗'] }}敗</span>
+        <span class="top-draw">{{ summary['ホーム成績']['引分'] }}分</span>
+      {% else %}-{% endif %}
+    </div>
+    <div class="top-summary-sub">
+      {% if summary and summary['ホーム成績'] %}
+        勝率 <span class="top-subrate">{{ summary['ホーム成績']['勝率'] if summary['ホーム成績'].get('勝率') else '-' }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="top-summary-card">
+    <div class="top-summary-title"><span class="top-icon">🏟️</span>ビジター成績</div>
+    <div class="top-summary-value top-summary-flex">
+      {% if summary and summary['ビジター成績'] %}
+        <span class="top-win">{{ summary['ビジター成績']['勝'] }}勝</span>
+        <span class="top-lose">{{ summary['ビジター成績']['敗'] }}敗</span>
+        <span class="top-draw">{{ summary['ビジター成績']['引分'] }}分</span>
+      {% else %}-{% endif %}
+    </div>
+    <div class="top-summary-sub">
+      {% if summary and summary['ビジター成績'] %}
+        勝率 <span class="top-subrate">{{ summary['ビジター成績']['勝率'] if summary['ビジター成績'].get('勝率') else '-' }}</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<h2>直近5試合</h2>
+{% if summary and summary['直近5試合'] %}
+  <table class="top-recent-table">
+    <thead>
+      <tr>
+        <th>日付</th>
+        <th>相手チーム</th>
+        <th>得点</th>
+        <th>失点</th>
+        <th>勝敗</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in summary['直近5試合'] %}
+      <tr>
+        <td>{{ rec['日付'][:10] }}</td>
+        <td>{{ rec['相手チーム'] }}</td>
+        <td>{{ rec['得点'] }}</td>
+        <td>{{ rec['失点'] }}</td>
+        <td><span class="top-result-{{ rec['勝敗'] }}">{{ rec['勝敗'] }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>試合データがありません。</p>
+{% endif %}
+{% endblock %}

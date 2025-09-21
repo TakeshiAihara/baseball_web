@@ -1,0 +1,22 @@
+<form action="/record_specific_match" method="POST">
+    <label for="target_date">日付:</label>
+    <input type="date" id="target_date" name="target_date" value="{{ today }}" required><br>
+
+    <label for="team_name">チーム名:</label>
+    <select id="team_name" name="team_name" required>
+        {% for team in teams %}
+        <option value="{{ team }}">{{ team }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label for="comment">コメント:</label>
+    <textarea id="comment" name="comment" rows="2" cols="40" placeholder="試合に関するメモや感想など"></textarea><br>
+
+    <button type="submit">指定した試合を記録</button>
+
+    <hr>
+    <h2>保存された試合結果</h2>
+    <p>
+        <a href="{{ url_for('results') }}" class="button">全試合結果を見る</a>
+    </p>
+</form>

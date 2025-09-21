@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block title %}選手通算成績ページ{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='top.css') }}">
+<h1>選手通算成績ページ</h1>
+<nav>
+  <a href="/">TOP</a> |
+  <a href="/record">試合記録</a> |
+  <a href="/summary">通算成績</a> |
+  <a href="/players">選手成績</a> |
+  <a href="/about">その他</a>
+</nav>
+
+<div class="tab-container">
+  <button class="tab-btn active" onclick="showTab('batters')" id="batters-btn">打者成績</button>
+  <button class="tab-btn" onclick="showTab('pitchers')" id="pitchers-btn">投手成績</button>
+</div>
+
+<div id="batters-tab" class="tab-content show">
+  <div style="margin-bottom: 1em;">
+    <label for="batters-sort-col">並べ替え：</label>
+    <select id="batters-sort-col">
+      <option value="0">選手名</option>
+      <option value="1">チーム名</option>
+      <option value="2">打数</option>
+      <option value="3">安打</option>
+      <option value="4">打点</option>
+      <option value="5">盗塁</option>
+      <option value="6">本塁打</option>
+      <option value="7">三振</option>
+      <option value="8">四球</option>
+      <option value="9">死球</option>
+      <option value="10">犠打</option>
+      <option value="11">犠飛</option>
+      <option value="12">打率</option>
+      <option value="13">出塁率</option>
+      <option value="14">OPS</option>
+    </select>
+    <button id="batters-sort-order" data-order="asc">昇順</button>
+  </div>
+  <h2>打者成績</h2>
+  <table border="1" id="batters-table">
+    <thead>
+      <tr>
+        <th>選手名</th><th>チーム名</th><th>打数</th><th>安打</th><th>打点</th><th>盗塁</th><th>本塁打</th><th>三振</th><th>四球</th><th>死球</th><th>犠打</th><th>犠飛</th><th>打率</th><th>出塁率</th><th>OPS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in batters_stats %}
+      <tr>
+        <td>{{ row['選手名'] }}</td>
+        <td>{{ row['チーム名'] }}</td>
+        <td>{{ row['打数'] }}</td>
+        <td>{{ row['安打'] }}</td>
+        <td>{{ row['打点'] }}</td>
+        <td>{{ row['盗塁'] }}</td>
+        <td>{{ row['本塁打'] }}</td>
+        <td>{{ row['三振'] }}</td>
+        <td>{{ row['四球'] }}</td>
+        <td>{{ row['死球'] }}</td>
+        <td>{{ row['犠打'] }}</td>
+        <td>{{ row['犠飛'] }}</td>
+        <td>{{ row['打率'] if '打率' in row else '-' }}</td>
+        <td>{{ row['出塁率'] if '出塁率' in row else '-' }}</td>
+        <td>{{ row['OPS'] if 'OPS' in row else '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div id="pitchers-tab" class="tab-content">
+  <div style="margin-bottom: 1em;">
+    <label for="pitchers-sort-col">並べ替え：</label>
+    <select id="pitchers-sort-col">
+      <option value="0">選手名</option>
+      <option value="1">チーム名</option>
+      <option value="2">投球数</option>
+      <option value="3">投球回</option>
+      <option value="4">打者数</option>
+      <option value="5">被安打</option>
+      <option value="6">被本塁打</option>
+      <option value="7">与四球</option>
+      <option value="8">与死球</option>
+      <option value="9">奪三振</option>
+      <option value="10">暴投</option>
+      <option value="11">ボーク</option>
+      <option value="12">失点</option>
+      <option value="13">防御率</option>
+      <option value="14">奪三振率</option>
+    </select>
+    <button id="pitchers-sort-order" data-order="asc">昇順</button>
+  </div>
+  <h2>投手成績</h2>
+  <table border="1" id="pitchers-table">
+    <thead>
+      <tr>
+        <th>選手名</th><th>チーム名</th><th>投球数</th><th>投球回</th><th>打者数</th><th>被安打</th><th>被本塁打</th><th>与四球</th><th>与死球</th><th>奪三振</th><th>暴投</th><th>ボーク</th><th>失点</th><th>防御率</th><th>奪三振率</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in pitchers_stats %}
+      <tr>
+        <td>{{ row['選手名'] }}</td>
+        <td>{{ row['チーム名'] }}</td>
+        <td>{{ row['投球数'] }}</td>
+        <td>{{ row['投球回'] }}</td>
+        <td>{{ row['打者数'] }}</td>
+        <td>{{ row['被安打'] }}</td>
+        <td>{{ row['被本塁打'] }}</td>
+        <td>{{ row['与四球'] }}</td>
+        <td>{{ row['与死球'] }}</td>
+        <td>{{ row['奪三振'] }}</td>
+        <td>{{ row['暴投'] }}</td>
+        <td>{{ row['ボーク'] }}</td>
+        <td>{{ row['失点'] }}</td>
+        <td>{{ row['防御率'] if '防御率' in row else '-' }}</td>
+        <td>{{ row['奪三振率'] if '奪三振率' in row else '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function showTab(tab) {
+  const battersTab = document.getElementById('batters-tab');
+  const pitchersTab = document.getElementById('pitchers-tab');
+  const battersBtn = document.getElementById('batters-btn');
+  const pitchersBtn = document.getElementById('pitchers-btn');
+  if(tab === 'batters') {
+    battersTab.classList.add('show');
+    pitchersTab.classList.remove('show');
+    battersBtn.classList.add('active');
+    pitchersBtn.classList.remove('active');
+  } else {
+    battersTab.classList.remove('show');
+    pitchersTab.classList.add('show');
+    battersBtn.classList.remove('active');
+    pitchersBtn.classList.add('active');
+  }
+}
+
+// テーブルソート機能
+function makeTableSortable(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const ths = table.querySelectorAll('th');
+  let sortState = {};
+  ths.forEach((th, idx) => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', function() {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const isAsc = sortState[idx] = !sortState[idx];
+      rows.sort((a, b) => {
+        let ta = a.children[idx].innerText.trim();
+        let tb = b.children[idx].innerText.trim();
+        // 数値判定
+        const na = parseFloat(ta.replace(/[^\d.-]/g, ''));
+        const nb = parseFloat(tb.replace(/[^\d.-]/g, ''));
+        if (!isNaN(na) && !isNaN(nb)) {
+          return isAsc ? na - nb : nb - na;
+        }
+        return isAsc ? ta.localeCompare(tb, 'ja') : tb.localeCompare(ta, 'ja');
+      });
+      rows.forEach(row => tbody.appendChild(row));
+      // ソート状態のビジュアルヒント
+      ths.forEach((oth, i) => {
+        oth.classList.toggle('sorted-asc', i === idx && isAsc);
+        oth.classList.toggle('sorted-desc', i === idx && !isAsc);
+      });
+    });
+  });
+}
+window.addEventListener('DOMContentLoaded', function() {
+  makeTableSortable('batters-table');
+  makeTableSortable('pitchers-table');
+
+  // 打者成績 並べ替えUI
+  const battersTable = document.getElementById('batters-table');
+  const battersSortCol = document.getElementById('batters-sort-col');
+  const battersSortOrder = document.getElementById('batters-sort-order');
+  battersSortOrder.addEventListener('click', function() {
+    const order = battersSortOrder.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
+    battersSortOrder.setAttribute('data-order', order);
+    battersSortOrder.textContent = order === 'asc' ? '昇順' : '降順';
+    sortTable(battersTable, parseInt(battersSortCol.value), order === 'asc');
+  });
+  battersSortCol.addEventListener('change', function() {
+    const order = battersSortOrder.getAttribute('data-order') === 'asc';
+    sortTable(battersTable, parseInt(battersSortCol.value), order);
+  });
+
+  // 投手成績 並べ替えUI
+  const pitchersTable = document.getElementById('pitchers-table');
+  const pitchersSortCol = document.getElementById('pitchers-sort-col');
+  const pitchersSortOrder = document.getElementById('pitchers-sort-order');
+  pitchersSortOrder.addEventListener('click', function() {
+    const order = pitchersSortOrder.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
+    pitchersSortOrder.setAttribute('data-order', order);
+    pitchersSortOrder.textContent = order === 'asc' ? '昇順' : '降順';
+    sortTable(pitchersTable, parseInt(pitchersSortCol.value), order === 'asc');
+  });
+  pitchersSortCol.addEventListener('change', function() {
+    const order = pitchersSortOrder.getAttribute('data-order') === 'asc';
+    sortTable(pitchersTable, parseInt(pitchersSortCol.value), order);
+  });
+
+  // 並べ替え関数
+  function sortTable(table, colIdx, asc=true) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      let ta = a.children[colIdx].innerText.trim();
+      let tb = b.children[colIdx].innerText.trim();
+      // 数値判定
+      const na = parseFloat(ta.replace(/[^\d.-]/g, ''));
+      const nb = parseFloat(tb.replace(/[^\d.-]/g, ''));
+      if (!isNaN(na) && !isNaN(nb)) {
+        return asc ? na - nb : nb - na;
+      }
+      return asc ? ta.localeCompare(tb, 'ja') : tb.localeCompare(ta, 'ja');
+    });
+    rows.forEach(row => tbody.appendChild(row));
+  }
+});
+</script>
+
+<style>
+.tab-container {
+  margin-bottom: 1em;
+}
+.tab-btn {
+  padding: 0.5em 1.5em;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  font-size: 1em;
+  outline: none;
+  border-radius: 5px 5px 0 0;
+  margin-right: 2px;
+}
+.tab-btn.active {
+  background: #4287f5;
+  color: #fff;
+  font-weight: bold;
+}
+.tab-content {
+  display: none;
+  border: 1px solid #ccc;
+  border-radius: 0 5px 5px 5px;
+  padding: 1em;
+  background: #fff;
+}
+.tab-content.show {
+  display: block;
+}
+</style>
+
+
+
+
+{% endblock %}

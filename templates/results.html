@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>試合結果一覧</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e2e2;
+            color: #555;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .scrollable-table {
+            max-height: 70vh; /* 画面の高さの70%に制限 */
+            overflow-y: auto; /* 垂直スクロールを有効にする */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .back-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+        .url-link {
+            word-break: break-all; /* 長いURLを改行する */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>保存された試合結果一覧</h1>
+
+        <!-- 集計サマリー表示ブロック -->
+        {% if summary %}
+        <div class="summary-cards">
+          <div class="summary-card">
+            <div class="summary-title">通算勝率</div>
+            <div class="summary-value">{{ summary['通算勝率'] }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">通算観戦数</div>
+            <div class="summary-value">{{ summary['通算観戦数'] }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">現在の波</div>
+            <div class="summary-value">{{ summary['現在の波'] if summary['現在の波'] is defined else '-' }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">直近5試合</div>
+            <div class="recent-matches">
+              {% for rec in summary['直近5試合'] %}
+                <span class="result-{{ rec['勝敗'] }}">
+                  {{ rec['勝敗'][0] }}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="summary-card summary-wide">
+            <div class="summary-title">通算成績</div>
+            <div class="summary-value">
+              {{ summary['通算成績']['勝'] }}勝
+              {{ summary['通算成績']['敗'] }}敗
+              {{ summary['通算成績']['引分'] }}分
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">本拠地成績</div>
+            <div class="summary-value">
+              {{ summary['ホーム成績']['勝'] }}勝
+              {{ summary['ホーム成績']['敗'] }}敗
+              {{ summary['ホーム成績']['引分'] }}分
+            </div>
+            <div class="summary-sub">
+              勝率 {{ summary['ホーム成績']['勝率'] if summary['ホーム成績']['勝率'] is defined else '-' }}
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">ビジター成績</div>
+            <div class="summary-value">
+              {{ summary['ビジター成績']['勝'] }}勝
+              {{ summary['ビジター成績']['敗'] }}敗
+              {{ summary['ビジター成績']['引分'] }}分
+            </div>
+            <div class="summary-sub">
+              勝率 {{ summary['ビジター成績']['勝率'] if summary['ビジター成績']['勝率'] is defined else '-' }}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="scrollable-table">
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                    <tr>
+                        {% for col in columns %}
+                            {% if col == 'URL' %}
+                                <td><a href="{{ match[col] }}" target="_blank" class="url-link">{{ match[col] }}</a></td>
+                            {% else %}
+                                <td>{{ match[col] }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-button">メインページに戻る</a>
+    </div>
+</body>
+</html>
